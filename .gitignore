@@ -1,0 +1,25 @@
+# Compiled objects
+*.o
+*.obj
+
+# Binaries
+mini_os
+mini_os_main
+test_memory
+test_math
+test_string
+test_shell
+test_runner
+
+# Build directory
+build/
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
