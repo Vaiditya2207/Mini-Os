@@ -1,8 +1,9 @@
 /*
- * shell.c — Interactive Shell (Basic Commands)
+ * shell.c — Interactive Shell (+ memmap)
  *
  * Input: keyboard.c  → kb_read_line()
  * Parse: string.c    → str_split()
+ * Memory: memory.c   → mem_alloc() / mem_free() / mem_dump()
  * Output: screen.c   → scr_print()
  */
 
@@ -10,6 +11,7 @@
 #include "../include/keyboard.h"
 #include "../include/screen.h"
 #include "../include/string.h"
+#include "../include/memory.h"
 
 #include <stdio.h>
 
@@ -22,6 +24,7 @@ static void cmd_help(void)
     scr_print("    help          Show this help message\n");
     scr_print("    echo <text>   Print text to console\n");
     scr_print("    clear         Clear the screen\n");
+    scr_print("    memmap        Show heap memory map\n");
     scr_print("    exit          Shutdown Mini OS\n\n");
 }
 
@@ -53,10 +56,11 @@ void shell_execute(char **tokens, int count)
     if (count == 0) return;
     const char *cmd = tokens[0];
 
-    if      (str_compare(cmd, "help")  == 0) cmd_help();
-    else if (str_compare(cmd, "echo")  == 0) cmd_echo(tokens, count);
-    else if (str_compare(cmd, "clear") == 0) scr_clear();
-    else if (str_compare(cmd, "exit")  == 0) shell_running = 0;
+    if      (str_compare(cmd, "help")   == 0) cmd_help();
+    else if (str_compare(cmd, "echo")   == 0) cmd_echo(tokens, count);
+    else if (str_compare(cmd, "clear")  == 0) scr_clear();
+    else if (str_compare(cmd, "memmap") == 0) mem_dump();
+    else if (str_compare(cmd, "exit")   == 0) shell_running = 0;
     else {
         scr_print("  Unknown command: '");
         scr_print(cmd);
