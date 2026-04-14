@@ -1,16 +1,25 @@
 # ══════════════════════════════════════════════════════════════════════
 #  Mini OS — Makefile
 #  Freestanding Systems Programming in C
+#
+#  Structure:
+#    main.c     → Entry point (clean bootstrap)
+#    shell.c    → Shell REPL loop and commands
+#    memory.c   → Virtual heap allocator
+#    string.c   → String parser (strlen, strcpy, strcmp, split, itoa)
+#    keyboard.c → Keyboard input handler
+#    screen.c   → Screen output layer (print, clear)
+#    math.c     → Arithmetic engine
+#    vfs.c      → Virtual File System
+#    task.c     → Task Scheduler
 # ══════════════════════════════════════════════════════════════════════
 
-CC     = clang
+CC = clang
 CFLAGS = -Wall -Wextra -Werror -std=c99
 
-SRC    = src/main.c src/shell.c src/memory.c src/math.c \
-         src/string.c src/screen.c src/keyboard.c \
-         src/vfs.c src/task.c
-LIB    = src/memory.c src/math.c src/string.c src/screen.c \
-         src/keyboard.c src/vfs.c src/task.c
+SRC = src/main.c src/shell.c src/memory.c src/math.c src/string.c src/screen.c src/keyboard.c src/vfs.c src/task.c
+LIB = src/memory.c src/math.c src/string.c src/screen.c src/keyboard.c src/vfs.c src/task.c
+
 TARGET = mini_os
 
 .PHONY: all test clean
@@ -18,8 +27,12 @@ TARGET = mini_os
 all:
 	$(CC) $(CFLAGS) -o $(TARGET) $(SRC)
 
+# Game (Track A)
+game:
+	$(CC) $(CFLAGS) -o mini_game src/game.c $(LIB)
+
 # Tests
-test: test_memory test_math test_string
+test: test_memory test_math test_string test_shell
 	@echo ""
 	@echo "Running all tests..."
 	@echo ""
@@ -28,6 +41,8 @@ test: test_memory test_math test_string
 	@./test_math
 	@echo ""
 	@./test_string
+	@echo ""
+	@./test_shell
 	@echo ""
 	@echo "All tests completed."
 
@@ -40,5 +55,8 @@ test_math: tests/test_math.c src/math.c
 test_string: tests/test_string.c src/string.c
 	$(CC) $(CFLAGS) -o $@ $^
 
+test_shell: tests/test_shell.c src/memory.c src/math.c src/string.c src/screen.c
+	$(CC) $(CFLAGS) -o $@ $^
+
 clean:
-	rm -f $(TARGET) test_memory test_math test_string test_shell
+	rm -f $(TARGET) mini_game test_memory test_math test_string test_shell
