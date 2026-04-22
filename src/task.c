@@ -1,25 +1,28 @@
+/*
+ * task.c — Cooperative + Preemptive Task Scheduler
+ *
+ * task_tick_all() is called by sched_dispatch() on every SIGALRM tick.
+ * Tasks with state TASK_READY get their tick_fn called.
+ * Tasks with state TASK_SLEEPING decrement sleep_ticks first.
+ * Tasks with state TASK_DONE are skipped and their slot is reusable.
+ */
+
 #include "../include/task.h"
 #include "../include/memory.h"
 #include "../include/string.h"
 #include "../include/screen.h"
-
-#define MAX_NAME_LEN 32
-
-typedef struct {
-    void (*tick)(void *state);
-    void  *state;
-    int    active;
-    char   name[MAX_NAME_LEN];
-} Task;
 
 static Task task_table[MAX_TASKS];
 
 void task_init(void)
 {
     for (int i = 0; i < MAX_TASKS; i++) {
-        task_table[i].active = 0;
-        task_table[i].tick   = NULL;
-        task_table[i].state  = NULL;
+        task_table[i].active      = 0;
+        task_table[i].tick        = NULL;
+        task_table[i].state       = NULL;
+        task_table[i].task_state  = TASK_DONE;
+        task_table[i].sleep_ticks = 0;
+        task_table[i].name[0]     = '\0';
     }
 }
 
@@ -28,9 +31,11 @@ int task_add(const char *name, void (*tick_fn)(void *), void *state)
     for (int i = 0; i < MAX_TASKS; i++) {
         if (!task_table[i].active) {
             str_copy(task_table[i].name, name, MAX_NAME_LEN);
-            task_table[i].tick   = tick_fn;
-            task_table[i].state  = state;
-            task_table[i].active = 1;
+            task_table[i].tick        = tick_fn;
+            task_table[i].state       = state;
+            task_table[i].active      = 1;
+            task_table[i].task_state  = TASK_READY;
+            task_table[i].sleep_ticks = 0;
             return i;
         }
     }
@@ -41,8 +46,27 @@ int task_add(const char *name, void (*tick_fn)(void *), void *state)
 void task_tick_all(void)
 {
     for (int i = 0; i < MAX_TASKS; i++) {
-        if (task_table[i].active && task_table[i].tick) {
-            task_table[i].tick(task_table[i].state);
+        if (!task_table[i].active) continue;
+
+        switch (task_table[i].task_state) {
+            case TASK_SLEEPING:
+                if (task_table[i].sleep_ticks > 0) {
+                    task_table[i].sleep_ticks--;
+                } else {
+                    task_table[i].task_state = TASK_READY;
+                }
+                break;
+
+            case TASK_READY:
+                if (task_table[i].tick) {
+                    task_table[i].tick(task_table[i].state);
+                }
+                break;
+
+            case TASK_DONE:
+                /* Reap the slot */
+                task_table[i].active = 0;
+                break;
         }
     }
 }
@@ -50,8 +74,9 @@ void task_tick_all(void)
 void task_list(void)
 {
     int count = 0;
+
     scr_print("\n  Active Background Tasks:\n");
-    scr_print("  ID   Name             Status\n");
+    scr_print("  ID   Name             State\n");
     scr_print("  ──── ──────────────── ────────\n");
 
     for (int i = 0; i < MAX_TASKS; i++) {
@@ -62,7 +87,16 @@ void task_list(void)
             scr_print(id_buf);
             scr_print("    ");
             scr_print(task_table[i].name);
-            scr_print("           running\n");
+
+            /* Pad to column */
+            int pad = 16 - str_length(task_table[i].name);
+            for (int p = 0; p < pad; p++) scr_print(" ");
+
+            switch (task_table[i].task_state) {
+                case TASK_READY:    scr_print(" \033[32mrunning\033[0m\n");  break;
+                case TASK_SLEEPING: scr_print(" \033[33msleeping\033[0m\n"); break;
+                case TASK_DONE:     scr_print(" \033[31mdone\033[0m\n");     break;
+            }
             count++;
         }
     }
@@ -80,7 +114,6 @@ void task_kill(int id)
         return;
     }
 
-    /* Free state via memory.c */
     if (task_table[id].state) {
         mem_free(task_table[id].state);
     }
@@ -88,7 +121,22 @@ void task_kill(int id)
     scr_print("  Killed task '");
     scr_print(task_table[id].name);
     scr_print("'\n");
-    task_table[id].active = 0;
-    task_table[id].tick   = NULL;
-    task_table[id].state  = NULL;
+
+    task_table[id].active     = 0;
+    task_table[id].tick       = NULL;
+    task_table[id].state      = NULL;
+    task_table[id].task_state = TASK_DONE;
+}
+
+void task_sleep(int id, int ticks)
+{
+    if (id < 0 || id >= MAX_TASKS || !task_table[id].active) return;
+    task_table[id].task_state  = TASK_SLEEPING;
+    task_table[id].sleep_ticks = ticks;
+}
+
+Task *task_get(int id)
+{
+    if (id < 0 || id >= MAX_TASKS) return (Task *)0;
+    return &task_table[id];
 }
