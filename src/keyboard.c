@@ -1,9 +1,11 @@
 #include "../include/keyboard.h"
+#include "../include/scheduler.h"
 #include <termios.h> // Controls terminal behaviour (raw mode, echo, canonical mode)
 #include <fcntl.h> // File descriptor control (blocking vs non-blocking)
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 
 /* ── Module State ───────────────────────────────────────── */
 // Static because These are internal to module and Persist across function calls
@@ -91,7 +93,13 @@ int kb_read_line(char *buf, int max_len)
 
     while (1) {
         unsigned char ch;
-        if (read(STDIN_FILENO, &ch, 1) <= 0) continue;
+        int n = read(STDIN_FILENO, &ch, 1);
+        if (n < 0 && errno == EINTR) {
+            /* SIGALRM interrupted the read — dispatch pending scheduler ticks */
+            sched_dispatch();
+            continue;
+        }
+        if (n <= 0) continue;
 
         if (ch == '\n' || ch == '\r') { // enter key - end input null terminate
             buf[pos] = '\0';
