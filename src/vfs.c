@@ -333,3 +333,20 @@ void vfs_get_current_path(char *buf, int buf_size)
 
 int vfs_get_total_files(void) { return superblock.total_files; }
 int vfs_get_total_dirs(void) { return superblock.total_dirs; }
+
+int vfs_read_to_buf(const char *name, char *buf, int buf_size)
+{
+    if (!name || !buf || buf_size <= 0) return -1;
+
+    int idx = vfs_find_by_name(name, superblock.current_dir);
+    if (idx < 0) return -1;
+    if (inode_table[idx].is_dir) return -1;
+
+    if (!inode_table[idx].data || inode_table[idx].size == 0) {
+        buf[0] = '\0';
+        return 0;
+    }
+
+    str_copy(buf, inode_table[idx].data, buf_size);
+    return inode_table[idx].size;
+}

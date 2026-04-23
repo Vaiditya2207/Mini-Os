@@ -19,4 +19,7 @@ void vfs_get_current_path(char *buf, int buf_size);
 int vfs_get_total_files(void);
 int vfs_get_total_dirs(void);
 
+/* Read raw file content into caller-supplied buffer (for script engine) */
+int vfs_read_to_buf(const char *name, char *buf, int buf_size);
+
 #endif /* VFS_H */
