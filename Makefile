@@ -17,8 +17,8 @@
 CC = clang
 CFLAGS = -Wall -Wextra -Werror -std=c99
 
-SRC = src/main.c src/shell.c src/memory.c src/math.c src/string.c src/screen.c src/keyboard.c src/vfs.c src/task.c
-LIB = src/memory.c src/math.c src/string.c src/screen.c src/keyboard.c src/vfs.c src/task.c
+SRC = src/main.c src/shell.c src/memory.c src/math.c src/string.c src/screen.c src/keyboard.c src/vfs.c src/task.c src/scheduler.c src/script.c
+LIB = src/memory.c src/math.c src/string.c src/screen.c src/keyboard.c src/vfs.c src/task.c src/scheduler.c src/script.c
 
 TARGET = mini_os
 
