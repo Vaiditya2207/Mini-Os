@@ -20,6 +20,8 @@
 #include "../include/keyboard.h"
 #include "../include/vfs.h"
 #include "../include/task.h"
+#include "../include/scheduler.h"
+#include "../include/script.h"
 
 #include <stdio.h>   /* printf for formatted output only */
 
@@ -64,6 +66,8 @@ static void cmd_help(void)
     scr_print("  \033[36m║\033[0m  \033[32mtasks\033[0m                List background tasks     \033[36m║\033[0m\n");
     scr_print("  \033[36m║\033[0m  \033[32mkill\033[0m <id>            Kill a background task    \033[36m║\033[0m\n");
     scr_print("  \033[36m║\033[0m  \033[32mstartcounter\033[0m         Start counter task        \033[36m║\033[0m\n");
+    scr_print("  \033[36m║\033[0m  \033[32mrun\033[0m <file>           Run script (foreground)   \033[36m║\033[0m\n");
+    scr_print("  \033[36m║\033[0m  \033[32mrun\033[0m <file> \033[33m&\033[0m         Run script (background)  \033[36m║\033[0m\n");
     scr_print("  \033[36m║\033[0m  \033[32msysinfo\033[0m              System information        \033[36m║\033[0m\n");
     scr_print("  \033[36m║\033[0m  \033[32mexit\033[0m                 Shutdown Mini OS           \033[36m║\033[0m\n");
     scr_print("  \033[36m╚══════════════════════════════════════════════════╝\033[0m\n");
@@ -237,6 +241,20 @@ void shell_execute(char **tokens, int count)
             scr_print("  Error: out of memory\n");
         }
     }
+    else if (str_compare(cmd, "run") == 0) {
+        if (count < 2) {
+            scr_print("  Usage: run <script.sh> [&]\n");
+            scr_print("         & = run in background\n");
+        } else {
+            /* Check for trailing '&' — background flag */
+            int bg = (count >= 3 && str_compare(tokens[count - 1], "&") == 0);
+            if (bg) {
+                script_run_bg(tokens[1]);
+            } else {
+                script_run_fg(tokens[1]);
+            }
+        }
+    }
     else if (str_compare(cmd, "exit") == 0) {
         shell_running = 0;
     }
@@ -313,6 +331,7 @@ void shell_run(void)
 
         shell_execute(tokens, count);
 
-        task_tick_all();
+        /* Drain any scheduler ticks that fired during command execution */
+        sched_dispatch();
     }
 }

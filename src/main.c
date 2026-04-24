@@ -24,6 +24,7 @@
 #include "../include/keyboard.h"
 #include "../include/shell.h"
 #include "../include/screen.h"
+#include "../include/scheduler.h"
 
 /* ── Virtual RAM (backing store for the heap allocator) ───────────────── */
 
@@ -47,7 +48,10 @@ int main(void)
     /* ── Step 4: Initialize shell subsystem ────────────────────────── */
     shell_init();
 
-    /* ── Step 5: Run the shell REPL loop ───────────────────────────── */
+    /* ── Step 5: Arm the preemptive scheduler (SIGALRM @ 50ms) ─────── */
+    sched_init();
+
+    /* ── Step 6: Run the shell REPL loop ───────────────────────────── */
     shell_run();
 
     /* ── Step 6: Cleanup and exit ──────────────────────────────────── */
