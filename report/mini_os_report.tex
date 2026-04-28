@@ -7,7 +7,6 @@
 \usepackage{textcomp}
 \usepackage{xcolor}
 \usepackage{hyperref}
-\usepackage{listings}
 \usepackage{booktabs}
 \usepackage{array}
 \usepackage{float}
@@ -18,16 +17,6 @@
     citecolor=blue
 }
 
-\lstset{
-    basicstyle=\small\ttfamily,
-    breaklines=true,
-    frame=single,
-    language=C,
-    tabsize=4,
-    showstringspaces=false,
-    xleftmargin=4pt,
-    xrightmargin=4pt
-}
 
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
@@ -81,20 +70,20 @@ The project was built in two phases. Phase~1 (April 7--14) established the core 
 
 The heap allocator (\texttt{memory.c}) implements a \textbf{first-fit free list} over a 64\,KiB static array declared in \texttt{main.c}:
 
-\begin{lstlisting}
-static char virtual_ram[VIRTUAL_RAM_SIZE];  // 65536 bytes
+\begin{verbatim}
+static char virtual_ram[VIRTUAL_RAM_SIZE]; // 65536 bytes
 mem_init(virtual_ram, VIRTUAL_RAM_SIZE);
-\end{lstlisting}
+\end{verbatim}
 
 Each block is prefixed by a \texttt{BlockHeader} struct storing the total block size (including header), a free flag, and a next pointer forming a singly linked list:
 
-\begin{lstlisting}
+\begin{verbatim}
 typedef struct BlockHeader {
     size_t              size;
     int                 is_free;
     struct BlockHeader *next;
 } BlockHeader;
-\end{lstlisting}
+\end{verbatim}
 
 \textbf{Allocation} walks the list for the first free block satisfying the requested size. If the block remainder exceeds \texttt{MIN\_BLOCK\_SIZE}, it is split into an allocated block and a new free block, minimizing wasted space. All returned pointers are aligned to 8-byte boundaries via the \texttt{ALIGN} macro.
 
@@ -113,14 +102,14 @@ Every subsystem — VFS file data, task state structs, script line buffers — a
 
 The virtual filesystem (\texttt{vfs.c}) is modelled directly on Unix inode semantics. A 64-slot \texttt{inode\_table} stores all file and directory metadata; file content is heap-allocated via \texttt{mem\_alloc}.
 
-\begin{lstlisting}
+\begin{verbatim}
 typedef struct {
     char  name[MAX_NAME_LEN];
     int   size, is_dir, is_used;
-    char *data;    /* heap pointer via memory.c */
-    int   parent;  /* parent inode index; -1 = root */
+    char *data;   /* heap pointer via memory.c */
+    int   parent; /* parent inode index; -1 = root */
 } Inode;
-\end{lstlisting}
+\end{verbatim}
 
 A \texttt{Superblock} tracks total file and directory counts and the current working directory inode index. The directory tree is represented implicitly through the \texttt{parent} field: to list a directory, all inodes with a matching \texttt{parent} index are enumerated. This mirrors how real on-disk filesystems organize entries.
 
