@@ -1,0 +1,17 @@
+graph LR
+    subgraph "Virtual RAM (64 KiB)"
+        B1["BlockHeader\nUSED\n128B"]
+        B2["BlockHeader\nFREE\n512B"]
+        B3["BlockHeader\nUSED\n64B"]
+        B4["BlockHeader\nFREE\n63820B"]
+    end
+    B1 -->|next| B2
+    B2 -->|next| B3
+    B3 -->|next| B4
+    B4 -->|next| NULL["NULL"]
+
+    style B1 fill:#e74c3c,color:#fff
+    style B3 fill:#e74c3c,color:#fff
+    style B2 fill:#27ae60,color:#fff
+    style B4 fill:#27ae60,color:#fff
+    style NULL fill:#555,color:#fff

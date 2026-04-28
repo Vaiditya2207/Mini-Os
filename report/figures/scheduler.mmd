@@ -1,0 +1,19 @@
+sequenceDiagram
+    participant HW as setitimer
+    participant SIG as SIGALRM Handler
+    participant KB as kb_read_line()
+    participant SD as sched_dispatch()
+    participant TK as task_tick_all()
+
+    HW->>SIG: fires every 50ms
+    SIG->>SIG: tick_pending = 1
+    Note over SIG: signal-safe only
+
+    KB->>KB: read() blocked
+    SIG-->>KB: EINTR interrupts read()
+    KB->>SD: sched_dispatch()
+    SD->>SD: tick_pending = 0
+    SD->>TK: task_tick_all()
+    TK->>TK: tick each READY task
+    SD-->>KB: return
+    KB->>KB: restart read()

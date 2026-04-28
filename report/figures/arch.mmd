@@ -1,0 +1,24 @@
+graph TD
+    A["main.c\nEntry Point"] --> B["mem_init()\n64 KiB Virtual RAM"]
+    A --> C["kb_init()\nRaw Terminal Mode"]
+    A --> D["scr_init()\nANSI Renderer"]
+    A --> E["shell_init()\nMount VFS Root"]
+    A --> F["sched_init()\nSIGALRM @ 50ms"]
+    A --> G["shell_run()\nREPL Loop"]
+
+    G --> H["keyboard.c\nkb_read_line()"]
+    G --> I["string.c\nstr_split()"]
+    G --> J["shell_execute()\nCommand Dispatch"]
+    G --> K["sched_dispatch()\nDrain Ticks"]
+
+    J --> L["vfs.c\nFilesystem"]
+    J --> M["task.c\nScheduler"]
+    J --> N["script.c\nScript Engine"]
+    J --> O["memory.c\nHeap Allocator"]
+
+    style A fill:#1a1a2e,color:#fff
+    style G fill:#16213e,color:#fff
+    style L fill:#0f3460,color:#fff
+    style M fill:#0f3460,color:#fff
+    style N fill:#0f3460,color:#fff
+    style O fill:#0f3460,color:#fff
